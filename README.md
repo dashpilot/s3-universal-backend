@@ -10,6 +10,16 @@ Framework-agnostic Vercel API routes for authentication and S3 file storage.
 - ✅ Vercel-styled login page (light mode)
 - ✅ Works with any framework (Next.js, Vue, vanilla, etc.)
 
+## Quick Start
+
+Use degit to quickly get started:
+
+```bash
+npx degit dashpilot/s3-universal-backend my-s3-api
+cd my-s3-api
+npm install
+```
+
 ## Setup
 
 ### 1. Install Dependencies
@@ -241,18 +251,27 @@ You can:
 
 ## Example File
 
-An complete working example (`example-save.html`) demonstrates the full flow:
+A complete working example (`example-save.html`) demonstrates the full flow:
 
 1. Login with username/password
 2. Save JSON data to S3
-3. View API responses
+3. Upload and save images to S3
+4. View API responses
 
 To test the complete flow:
 
 1. Open `/example-save.html` or `/example` in your browser after deployment
 2. Log in with your credentials
-3. Enter JSON data or click "Load Example" to use sample data
+3. Enter JSON data (or click "Load JSON Example") and/or upload an image
 4. Click "Save to S3" to save the data
+
+**Image Upload Features:**
+
+- Drag and drop images onto the upload area
+- Click to select images from your computer
+- Image preview before uploading
+- Supports PNG, JPG, GIF, WebP, and SVG formats
+- Can save both JSON data and images in a single request
 
 This example shows exactly how to use the API endpoints with vanilla JavaScript. The example file is located in the `public/` directory.
 

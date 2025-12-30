@@ -195,7 +195,7 @@
 	<body>
 		<div class="container">
 			<h1>Save Data Example</h1>
-			<p class="subtitle">Complete example: Login and save JSON data to S3</p>
+			<p class="subtitle">Complete example: Login and save JSON data and images to S3</p>
 
 			<!-- Login Section -->
 			<div class="section" id="loginSection">
@@ -233,14 +233,15 @@
 
 			<!-- Save Data Section -->
 			<div class="section" id="saveSection" style="display: none">
-				<h2 style="font-size: 18px; margin-bottom: 16px">2. Save JSON Data</h2>
+				<h2 style="font-size: 18px; margin-bottom: 16px">2. Save Data to S3</h2>
 
 				<div class="message message-info" id="saveInfo">
-					You are logged in. Enter JSON data below and click "Save to S3".
+					You are logged in. Enter JSON data or upload an image below.
 				</div>
 				<div class="message message-error" id="saveError"></div>
 				<div class="message message-success" id="saveSuccess"></div>
 
+				<!-- JSON Data Section -->
 				<div class="form-group">
 					<label for="jsonData" class="form-label">JSON Data</label>
 					<textarea
@@ -253,13 +254,63 @@
 					</p>
 				</div>
 
-				<button type="button" class="button" id="saveButton">Save to S3</button>
-				<button type="button" class="button button-secondary" id="loadExampleButton" style="margin-left: 8px">
-					Load Example
-				</button>
-				<button type="button" class="button button-secondary" id="logoutButton" style="margin-left: 8px">
-					Logout
-				</button>
+				<!-- Image Upload Section -->
+				<div class="form-group">
+					<label class="form-label">Image Upload</label>
+					<div
+						id="imageDropZone"
+						style="
+							border: 2px dashed #d1d1d1;
+							border-radius: 6px;
+							padding: 32px;
+							text-align: center;
+							background-color: #fafafa;
+							cursor: pointer;
+							transition: border-color 0.2s, background-color 0.2s;
+						"
+					>
+						<input
+							type="file"
+							id="imageInput"
+							accept="image/*"
+							style="display: none"
+						/>
+						<div id="dropZoneContent">
+							<p style="color: #666; margin-bottom: 8px; font-size: 14px">
+								Drag and drop an image here, or click to select
+							</p>
+							<p style="color: #999; font-size: 12px">PNG, JPG, GIF, WebP, SVG</p>
+						</div>
+						<div id="imagePreview" style="display: none; margin-top: 16px">
+							<img
+								id="previewImg"
+								style="
+									max-width: 100%;
+									max-height: 300px;
+									border-radius: 6px;
+									border: 1px solid #e5e5e5;
+								"
+							/>
+							<p id="previewFilename" style="margin-top: 8px; font-size: 12px; color: #666"></p>
+							<button
+								type="button"
+								class="button button-secondary"
+								id="removeImageButton"
+								style="margin-top: 12px"
+							>
+								Remove Image
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px">
+					<button type="button" class="button" id="saveButton">Save to S3</button>
+					<button type="button" class="button button-secondary" id="loadExampleButton">
+						Load JSON Example
+					</button>
+					<button type="button" class="button button-secondary" id="logoutButton">Logout</button>
+				</div>
 
 				<div id="saveResponse" style="display: none; margin-top: 20px">
 					<h3 style="font-size: 14px; font-weight: 500; margin-bottom: 8px">API Response:</h3>
@@ -285,11 +336,22 @@
 			const usernameInput = document.getElementById('username');
 			const passwordInput = document.getElementById('password');
 			const jsonDataInput = document.getElementById('jsonData');
+			const imageInput = document.getElementById('imageInput');
+			const imageDropZone = document.getElementById('imageDropZone');
+			const dropZoneContent = document.getElementById('dropZoneContent');
+			const imagePreview = document.getElementById('imagePreview');
+			const previewImg = document.getElementById('previewImg');
+			const previewFilename = document.getElementById('previewFilename');
+			const removeImageButton = document.getElementById('removeImageButton');
 
 			const loginButton = document.getElementById('loginButton');
 			const saveButton = document.getElementById('saveButton');
 			const loadExampleButton = document.getElementById('loadExampleButton');
 			const logoutButton = document.getElementById('logoutButton');
+
+			// Image upload state
+			let selectedImageFile = null;
+			let imageBase64 = null;
 
 			// Check if user is already logged in
 			async function checkLoginStatus() {
@@ -384,6 +446,73 @@
 				}
 			}
 
+			// Image upload handlers
+			imageDropZone.addEventListener('click', () => {
+				imageInput.click();
+			});
+
+			imageInput.addEventListener('change', (e) => {
+				const file = e.target.files[0];
+				if (file) {
+					handleImageSelect(file);
+				}
+			});
+
+			// Drag and drop handlers
+			imageDropZone.addEventListener('dragover', (e) => {
+				e.preventDefault();
+				imageDropZone.style.borderColor = '#000000';
+				imageDropZone.style.backgroundColor = '#f5f5f5';
+			});
+
+			imageDropZone.addEventListener('dragleave', (e) => {
+				e.preventDefault();
+				imageDropZone.style.borderColor = '#d1d1d1';
+				imageDropZone.style.backgroundColor = '#fafafa';
+			});
+
+			imageDropZone.addEventListener('drop', (e) => {
+				e.preventDefault();
+				imageDropZone.style.borderColor = '#d1d1d1';
+				imageDropZone.style.backgroundColor = '#fafafa';
+
+				const file = e.dataTransfer.files[0];
+				if (file && file.type.startsWith('image/')) {
+					handleImageSelect(file);
+				} else {
+					showMessage(saveError, 'Please drop an image file');
+				}
+			});
+
+			removeImageButton.addEventListener('click', () => {
+				selectedImageFile = null;
+				imageBase64 = null;
+				imageInput.value = '';
+				imagePreview.style.display = 'none';
+				dropZoneContent.style.display = 'block';
+			});
+
+			// Handle image file selection
+			function handleImageSelect(file) {
+				if (!file.type.startsWith('image/')) {
+					showMessage(saveError, 'Please select an image file');
+					return;
+				}
+
+				selectedImageFile = file;
+				previewFilename.textContent = file.name;
+
+				// Show preview
+				const reader = new FileReader();
+				reader.onload = (e) => {
+					imageBase64 = e.target.result;
+					previewImg.src = imageBase64;
+					imagePreview.style.display = 'block';
+					dropZoneContent.style.display = 'none';
+				};
+				reader.readAsDataURL(file);
+			}
+
 			// Save data function
 			async function handleSave() {
 				hideMessages();
@@ -391,31 +520,44 @@
 				saveButton.textContent = 'Saving...';
 				saveResponse.style.display = 'none';
 
-				let jsonData;
+				let jsonData = null;
 				const inputValue = jsonDataInput.value.trim();
 
-				if (!inputValue) {
-					showMessage(saveError, 'Please enter JSON data');
+				// Validate that at least one type of data is provided
+				if (!inputValue && !selectedImageFile) {
+					showMessage(saveError, 'Please enter JSON data or upload an image');
 					saveButton.disabled = false;
 					saveButton.textContent = 'Save to S3';
 					return;
 				}
 
-				// Try to parse JSON
-				try {
-					// First try to parse as JSON string
-					jsonData = JSON.parse(inputValue);
-				} catch (e1) {
+				// Parse JSON if provided
+				if (inputValue) {
 					try {
-						// If that fails, try to evaluate as JavaScript (for convenience)
-						// This allows pasting JS objects like {key: "value"}
-						jsonData = eval('(' + inputValue + ')');
-					} catch (e2) {
-						showMessage(saveError, 'Invalid JSON format. Please check your syntax.');
-						saveButton.disabled = false;
-						saveButton.textContent = 'Save to S3';
-						return;
+						// First try to parse as JSON string
+						jsonData = JSON.parse(inputValue);
+					} catch (e1) {
+						try {
+							// If that fails, try to evaluate as JavaScript (for convenience)
+							// This allows pasting JS objects like {key: "value"}
+							jsonData = eval('(' + inputValue + ')');
+						} catch (e2) {
+							showMessage(saveError, 'Invalid JSON format. Please check your syntax.');
+							saveButton.disabled = false;
+							saveButton.textContent = 'Save to S3';
+							return;
+						}
 					}
+				}
+
+				// Prepare request body
+				const requestBody = {};
+				if (jsonData) {
+					requestBody.data = jsonData;
+				}
+				if (imageBase64 && selectedImageFile) {
+					requestBody.image = imageBase64;
+					requestBody.filename = selectedImageFile.name;
 				}
 
 				try {
@@ -425,15 +567,20 @@
 							'Content-Type': 'application/json'
 						},
 						credentials: 'include', // Include auth cookie
-						body: JSON.stringify({
-							data: jsonData
-						})
+						body: JSON.stringify(requestBody)
 					});
 
 					const responseData = await response.json();
 
 					if (response.ok) {
-						showMessage(saveSuccess, `Data saved successfully! Location: ${responseData.results.json.key}`);
+						const savedItems = [];
+						if (responseData.results.json) {
+							savedItems.push(`JSON: ${responseData.results.json.key}`);
+						}
+						if (responseData.results.image) {
+							savedItems.push(`Image: ${responseData.results.image.key}`);
+						}
+						showMessage(saveSuccess, `Saved successfully! ${savedItems.join(', ')}`);
 						saveResponse.style.display = 'block';
 						saveResponseContent.textContent = JSON.stringify(responseData, null, 2);
 					} else {
@@ -468,6 +615,11 @@
 				usernameInput.value = '';
 				passwordInput.value = '';
 				jsonDataInput.value = '';
+				selectedImageFile = null;
+				imageBase64 = null;
+				imageInput.value = '';
+				imagePreview.style.display = 'none';
+				dropZoneContent.style.display = 'block';
 				saveResponse.style.display = 'none';
 			}
 
