@@ -1,4 +1,4 @@
-# Vercel S3 API
+# S3 Universal Backend
 
 Framework-agnostic Vercel API routes for authentication and S3 file storage.
 
