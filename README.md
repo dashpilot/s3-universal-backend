@@ -191,10 +191,12 @@ const response = await fetch('/api/save', {
 
 ## Login Page
 
-A pre-styled login page is available at `/login.html`. You can:
+A pre-styled login page is available at `/login.html` (accessible via `/login` rewrite). The HTML files are located in the `public/` directory and are automatically served by Vercel as static files.
 
-1. Serve it as a static file (place in `public/` folder if using Next.js)
-2. Create a route that serves it
+You can:
+
+1. Access it directly at `/login.html`
+2. Access it via the rewrite route `/login`
 3. Use it as a template for your framework's routing
 
 ## Example File
@@ -207,18 +209,19 @@ An complete working example (`example-save.html`) demonstrates the full flow:
 
 To test the complete flow:
 
-1. Open `example-save.html` in your browser (or serve it through your web server)
+1. Open `/example-save.html` or `/example` in your browser after deployment
 2. Log in with your credentials
 3. Enter JSON data or click "Load Example" to use sample data
 4. Click "Save to S3" to save the data
 
-This example shows exactly how to use the API endpoints with vanilla JavaScript.
+This example shows exactly how to use the API endpoints with vanilla JavaScript. The example file is located in the `public/` directory.
 
 ## S3-Compatible Services
 
 This API works with:
 
 - AWS S3
+- **Cloudflare R2** (see configuration below)
 - DigitalOcean Spaces
 - MinIO
 - Wasabi
@@ -226,6 +229,46 @@ This API works with:
 - Any S3-compatible storage service
 
 For S3-compatible services, set `S3_FORCE_PATH_STYLE=true` in your environment variables.
+
+### Cloudflare R2 Configuration
+
+For Cloudflare R2, you have two options:
+
+**Option 1: Use R2_ACCOUNT_ID (Recommended)**
+
+```env
+R2_ACCOUNT_ID=your-cloudflare-account-id
+S3_ACCESS_KEY_ID=your-r2-access-key-id
+S3_SECRET_ACCESS_KEY=your-r2-secret-access-key
+S3_BUCKET=your-bucket-name
+S3_REGION=auto
+# R2_JURISDICTION=eu  # Optional: 'eu' for EU jurisdiction, 'fedramp' for FedRAMP
+```
+
+The endpoint will be automatically constructed as: `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`
+
+**Option 2: Set S3_ENDPOINT manually**
+
+```env
+S3_ENDPOINT=https://your-account-id.r2.cloudflarestorage.com
+S3_ACCESS_KEY_ID=your-r2-access-key-id
+S3_SECRET_ACCESS_KEY=your-r2-secret-access-key
+S3_BUCKET=your-bucket-name
+S3_REGION=auto
+S3_FORCE_PATH_STYLE=true
+```
+
+**For EU or FedRAMP jurisdictions:**
+
+- EU: `https://your-account-id.eu.r2.cloudflarestorage.com`
+- FedRAMP: `https://your-account-id.fedramp.r2.cloudflarestorage.com`
+
+**Notes:**
+
+- R2 requires `forcePathStyle=true` (automatically set when using `R2_ACCOUNT_ID`)
+- R2 region should be set to `auto`
+- Get your Account ID from the Cloudflare dashboard → R2 section
+- Create API tokens in Cloudflare dashboard → R2 → Manage R2 API Tokens
 
 ## Security Notes
 
