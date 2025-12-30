@@ -2,6 +2,24 @@
 
 Framework-agnostic Vercel API routes for authentication and S3 file storage.
 
+## Why This Approach?
+
+This solution offers a **vendor-independent, framework-agnostic backend** that's perfect for smaller personal and small-business sites. Here's what makes it special:
+
+- **🔄 No Vendor Lock-in**: Works with any S3-compatible storage (AWS S3, Cloudflare R2, DigitalOcean Spaces, MinIO, etc.). Switch providers anytime without changing your code.
+
+- **🎨 Framework Freedom**: Use any frontend framework (Next.js, Vue, React, Svelte, vanilla JS) or switch between them. The backend is completely framework-agnostic.
+
+- **💰 Cost-Effective**: Pay-as-you-go storage pricing. No database server costs or complex infrastructure to manage.
+
+- **📦 Simple & Portable**: No database setup, migrations, or ORMs. Your data is just files in S3, making backup and migration straightforward.
+
+- **🔒 Data Ownership**: Your data lives in your S3 bucket. You control it, can export it easily, and aren't tied to proprietary database services.
+
+- **🚀 Perfect for Small Sites**: Ideal for personal sites, small business websites, prototypes, and projects where simplicity and flexibility matter more than complex querying capabilities.
+
+This approach solves storage and simple database needs while giving you the freedom to choose your storage provider and frontend framework independently.
+
 ## Features
 
 - ✅ Login endpoint with JWT authentication
