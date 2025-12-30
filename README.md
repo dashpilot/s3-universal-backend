@@ -47,6 +47,7 @@ Required environment variables:
 - `S3_SECRET_ACCESS_KEY` - S3 secret key
 - `S3_BUCKET` - S3 bucket name
 - `S3_FORCE_PATH_STYLE` - Set to 'true' for S3-compatible services (MinIO, DigitalOcean Spaces, etc.)
+- `PUBLIC_URL` - (Optional) Base URL for constructing public image URLs. Example: `https://your-bucket.s3.amazonaws.com` or `https://pub-xxx.r2.cloudflarestorage.com`
 
 ### 3. Deploy to Vercel
 
@@ -137,12 +138,11 @@ Saves JSON data and/or base-64 encoded images to S3 storage. Requires authentica
 ```json
 {
 	"data": { "key": "value", "nested": { "data": 123 } },
-	"image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
-	"filename": "image.png"
+	"image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
 }
 ```
 
-Both `data` and `image` are optional, but at least one must be provided. If `image` is provided, `filename` is required.
+Both `data` and `image` are optional, but at least one must be provided. The backend will automatically generate a random filename for images.
 
 **Response:**
 
@@ -152,10 +152,17 @@ Both `data` and `image` are optional, but at least one must be provided. If `ima
 	"message": "Data saved successfully",
 	"results": {
 		"json": { "key": "username/data.json", "saved": true },
-		"image": { "key": "username/img/image.png", "saved": true }
+		"image": {
+			"key": "username/img/abc123xyz456.png",
+			"filename": "abc123xyz456.png",
+			"url": "https://your-bucket.s3.amazonaws.com/username/img/abc123xyz456.png",
+			"saved": true
+		}
 	}
 }
 ```
+
+The `url` field in the image result is only included if `PUBLIC_URL` is configured in your environment variables.
 
 ## File Structure
 
@@ -200,16 +207,20 @@ const response = await fetch('/api/save', {
 	})
 });
 
-// Save image
+// Save image (filename is automatically generated)
 const response = await fetch('/api/save', {
 	method: 'POST',
 	headers: { 'Content-Type': 'application/json' },
 	credentials: 'include',
 	body: JSON.stringify({
-		image: canvas.toDataURL('image/png'), // Base-64 encoded image
-		filename: 'screenshot.png'
+		image: canvas.toDataURL('image/png') // Base-64 encoded image
 	})
 });
+
+// Response includes the generated filename and URL
+const { results } = await response.json();
+console.log('Image saved:', results.image.filename);
+console.log('Image URL:', results.image.url);
 
 // Save both
 const response = await fetch('/api/save', {
@@ -218,8 +229,7 @@ const response = await fetch('/api/save', {
 	credentials: 'include',
 	body: JSON.stringify({
 		data: { metadata: 'value' },
-		image: imageDataUrl,
-		filename: 'image.png'
+		image: imageDataUrl
 	})
 });
 ```
@@ -267,10 +277,11 @@ To test the complete flow:
 
 **Image Upload Features:**
 
-- Drag and drop images onto the upload area
-- Click to select images from your computer
+- Select images from your computer using file input
 - Image preview before uploading
 - Supports PNG, JPG, GIF, WebP, and SVG formats
+- Random filename generation on the backend
+- Full image URL returned in response (if PUBLIC_URL is configured)
 - Can save both JSON data and images in a single request
 
 This example shows exactly how to use the API endpoints with vanilla JavaScript. The example file is located in the `public/` directory.

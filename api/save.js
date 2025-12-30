@@ -66,7 +66,7 @@ module.exports = async (req, res) => {
 		}
 
 		const username = decoded.username;
-		const { data, image, filename } = req.body;
+		const { data, image } = req.body;
 
 		// Validate that at least one type of data is provided
 		if (!data && !image) {
@@ -102,18 +102,19 @@ module.exports = async (req, res) => {
 
 		// Save base-64 image
 		if (image) {
-			if (!filename) {
-				return res.status(400).json({
-					error: 'filename is required when providing image data'
-				});
-			}
-
 			// Remove data URL prefix if present (e.g., "data:image/png;base64,")
+			const dataUrlMatch = image.match(/^data:image\/(\w+);base64,/);
+			const imageType = dataUrlMatch ? dataUrlMatch[1] : 'png';
 			const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
 			const imageBuffer = Buffer.from(base64Data, 'base64');
 
-			// Determine content type from filename or default to image/png
-			const extension = filename.split('.').pop().toLowerCase();
+			// Generate random filename
+			const randomString =
+				Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+			const extension = imageType === 'jpeg' ? 'jpg' : imageType;
+			const randomFilename = `${randomString}.${extension}`;
+
+			// Determine content type from image type
 			const contentTypeMap = {
 				jpg: 'image/jpeg',
 				jpeg: 'image/jpeg',
@@ -122,9 +123,9 @@ module.exports = async (req, res) => {
 				webp: 'image/webp',
 				svg: 'image/svg+xml'
 			};
-			const contentType = contentTypeMap[extension] || 'image/png';
+			const contentType = contentTypeMap[imageType] || 'image/png';
 
-			const imageKey = `${username}/img/${filename}`;
+			const imageKey = `${username}/img/${randomFilename}`;
 
 			await s3Client.send(
 				new PutObjectCommand({
@@ -135,7 +136,11 @@ module.exports = async (req, res) => {
 				})
 			);
 
-			results.image = { key: imageKey, saved: true };
+			// Construct full URL
+			const publicUrl = process.env.PUBLIC_URL || '';
+			const imageUrl = publicUrl ? `${publicUrl.replace(/\/$/, '')}/${imageKey}` : imageKey;
+
+			results.image = { key: imageKey, filename: randomFilename, url: imageUrl, saved: true };
 		}
 
 		return res.status(200).json({
