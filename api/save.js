@@ -137,8 +137,8 @@ module.exports = async (req, res) => {
 			);
 
 			// Construct full URL
-			const publicUrl = process.env.PUBLIC_URL || '';
-			const imageUrl = publicUrl ? `${publicUrl.replace(/\/$/, '')}/${imageKey}` : imageKey;
+			const liveUrl = process.env.LIVE_URL || '';
+			const imageUrl = liveUrl ? `${liveUrl.replace(/\/$/, '')}/${imageKey}` : imageKey;
 
 			results.image = { key: imageKey, filename: randomFilename, url: imageUrl, saved: true };
 		}

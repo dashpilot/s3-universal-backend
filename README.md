@@ -47,7 +47,7 @@ Required environment variables:
 - `S3_SECRET_ACCESS_KEY` - S3 secret key
 - `S3_BUCKET` - S3 bucket name
 - `S3_FORCE_PATH_STYLE` - Set to 'true' for S3-compatible services (MinIO, DigitalOcean Spaces, etc.)
-- `PUBLIC_URL` - (Optional) Base URL for constructing public image URLs. Example: `https://your-bucket.s3.amazonaws.com` or `https://pub-xxx.r2.cloudflarestorage.com`
+- `LIVE_URL` - (Optional) Base URL for constructing public image URLs. Example: `https://your-bucket.s3.amazonaws.com` or `https://pub-xxx.r2.cloudflarestorage.com`
 
 ### 3. Deploy to Vercel
 
@@ -162,7 +162,7 @@ Both `data` and `image` are optional, but at least one must be provided. The bac
 }
 ```
 
-The `url` field in the image result is only included if `PUBLIC_URL` is configured in your environment variables.
+The `url` field in the image result is only included if `LIVE_URL` is configured in your environment variables.
 
 ## File Structure
 
@@ -281,7 +281,7 @@ To test the complete flow:
 - Image preview before uploading
 - Supports PNG, JPG, GIF, WebP, and SVG formats
 - Random filename generation on the backend
-- Full image URL returned in response (if PUBLIC_URL is configured)
+- Full image URL returned in response (if LIVE_URL is configured)
 - Can save both JSON data and images in a single request
 
 This example shows exactly how to use the API endpoints with vanilla JavaScript. The example file is located in the `public/` directory.
