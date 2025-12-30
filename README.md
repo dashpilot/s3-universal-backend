@@ -1,0 +1,240 @@
+# Vercel S3 API
+
+Framework-agnostic Vercel API routes for authentication and S3 file storage.
+
+## Features
+
+- ✅ Login endpoint with JWT authentication
+- ✅ Save JSON data and base-64 images to S3-compatible storage
+- ✅ User-specific folders (`/{username}/data.json` and `/{username}/img/{filename}`)
+- ✅ Vercel-styled login page (light mode)
+- ✅ Works with any framework (Next.js, Vue, vanilla, etc.)
+
+## Setup
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure Environment Variables
+
+Copy `.env.example` to `.env.local` (for local development) or configure in Vercel dashboard:
+
+```bash
+cp .env.example .env.local
+```
+
+Required environment variables:
+
+- `LOGIN_USERNAME` - Username for login
+- `LOGIN_PASSWORD` - Password for login
+- `JWT_SECRET` - Secret key for JWT tokens (use a strong random string in production)
+- `S3_ENDPOINT` - S3 endpoint URL
+- `S3_REGION` - AWS region (default: us-east-1)
+- `S3_ACCESS_KEY_ID` - S3 access key
+- `S3_SECRET_ACCESS_KEY` - S3 secret key
+- `S3_BUCKET` - S3 bucket name
+- `S3_FORCE_PATH_STYLE` - Set to 'true' for S3-compatible services (MinIO, DigitalOcean Spaces, etc.)
+
+### 3. Deploy to Vercel
+
+```bash
+vercel
+```
+
+Or connect your GitHub repository to Vercel for automatic deployments.
+
+## API Endpoints
+
+### POST `/api/login`
+
+Authenticates a user and returns a JWT token.
+
+**Request:**
+
+```json
+{
+	"username": "admin",
+	"password": "password"
+}
+```
+
+**Response:**
+
+```json
+{
+	"success": true,
+	"message": "Login successful",
+	"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+The token is also set as an HTTP-only cookie named `auth_token`.
+
+### POST `/api/save`
+
+Saves JSON data and/or base-64 encoded images to S3 storage. Requires authentication.
+
+**Headers:**
+
+- `Cookie: auth_token=<token>` (automatically sent by browser)
+- OR `Authorization: Bearer <token>`
+
+**Request:**
+
+```json
+{
+	"data": { "key": "value", "nested": { "data": 123 } },
+	"image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
+	"filename": "image.png"
+}
+```
+
+Both `data` and `image` are optional, but at least one must be provided. If `image` is provided, `filename` is required.
+
+**Response:**
+
+```json
+{
+	"success": true,
+	"message": "Data saved successfully",
+	"results": {
+		"json": { "key": "username/data.json", "saved": true },
+		"image": { "key": "username/img/image.png", "saved": true }
+	}
+}
+```
+
+## File Structure
+
+Files are saved to S3 in the following structure:
+
+```
+bucket/
+  ├── {username}/
+  │   ├── data.json          # JSON data
+  │   └── img/
+  │       └── {filename}     # Images
+```
+
+## Usage Examples
+
+### Login (JavaScript)
+
+```javascript
+const response = await fetch('/api/login', {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/json' },
+	body: JSON.stringify({
+		username: 'admin',
+		password: 'password'
+	})
+});
+
+const { token } = await response.json();
+// Token is also stored in cookie automatically
+```
+
+### Save Data (JavaScript)
+
+```javascript
+// Save JSON data
+const response = await fetch('/api/save', {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/json' },
+	credentials: 'include', // Include cookies
+	body: JSON.stringify({
+		data: { message: 'Hello World', timestamp: Date.now() }
+	})
+});
+
+// Save image
+const response = await fetch('/api/save', {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/json' },
+	credentials: 'include',
+	body: JSON.stringify({
+		image: canvas.toDataURL('image/png'), // Base-64 encoded image
+		filename: 'screenshot.png'
+	})
+});
+
+// Save both
+const response = await fetch('/api/save', {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/json' },
+	credentials: 'include',
+	body: JSON.stringify({
+		data: { metadata: 'value' },
+		image: imageDataUrl,
+		filename: 'image.png'
+	})
+});
+```
+
+### Using Authorization Header (alternative)
+
+```javascript
+const response = await fetch('/api/save', {
+	method: 'POST',
+	headers: {
+		'Content-Type': 'application/json',
+		Authorization: `Bearer ${token}`
+	},
+	body: JSON.stringify({
+		data: { message: 'Hello' }
+	})
+});
+```
+
+## Login Page
+
+A pre-styled login page is available at `/login.html`. You can:
+
+1. Serve it as a static file (place in `public/` folder if using Next.js)
+2. Create a route that serves it
+3. Use it as a template for your framework's routing
+
+## Example File
+
+An complete working example (`example-save.html`) demonstrates the full flow:
+
+1. Login with username/password
+2. Save JSON data to S3
+3. View API responses
+
+To test the complete flow:
+
+1. Open `example-save.html` in your browser (or serve it through your web server)
+2. Log in with your credentials
+3. Enter JSON data or click "Load Example" to use sample data
+4. Click "Save to S3" to save the data
+
+This example shows exactly how to use the API endpoints with vanilla JavaScript.
+
+## S3-Compatible Services
+
+This API works with:
+
+- AWS S3
+- DigitalOcean Spaces
+- MinIO
+- Wasabi
+- Backblaze B2
+- Any S3-compatible storage service
+
+For S3-compatible services, set `S3_FORCE_PATH_STYLE=true` in your environment variables.
+
+## Security Notes
+
+- Change `JWT_SECRET` to a strong random string in production
+- Use strong passwords for `LOGIN_PASSWORD`
+- Consider implementing rate limiting for production
+- The JWT token expires after 7 days (configurable in `api/login.js`)
+- Tokens are stored in HTTP-only cookies to prevent XSS attacks
+
+## License
+
+MIT

@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Save Data Example</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family:
+					-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
+					'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
+				background-color: #ffffff;
+				color: #000000;
+				padding: 40px 20px;
+				max-width: 800px;
+				margin: 0 auto;
+			}
+
+			.container {
+				background: #ffffff;
+				border: 1px solid #e5e5e5;
+				border-radius: 8px;
+				padding: 32px;
+				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+			}
+
+			h1 {
+				font-size: 24px;
+				font-weight: 600;
+				margin-bottom: 8px;
+				letter-spacing: -0.5px;
+			}
+
+			.subtitle {
+				font-size: 14px;
+				color: #666666;
+				margin-bottom: 32px;
+			}
+
+			.section {
+				margin-bottom: 32px;
+				padding-bottom: 32px;
+				border-bottom: 1px solid #e5e5e5;
+			}
+
+			.section:last-child {
+				border-bottom: none;
+				margin-bottom: 0;
+				padding-bottom: 0;
+			}
+
+			.form-group {
+				margin-bottom: 20px;
+			}
+
+			.form-label {
+				display: block;
+				font-size: 14px;
+				font-weight: 500;
+				color: #000000;
+				margin-bottom: 8px;
+			}
+
+			.form-input {
+				width: 100%;
+				padding: 10px 12px;
+				font-size: 14px;
+				line-height: 20px;
+				color: #000000;
+				background-color: #ffffff;
+				border: 1px solid #d1d1d1;
+				border-radius: 6px;
+				transition: border-color 0.2s, box-shadow 0.2s;
+				font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+				font-size: 13px;
+			}
+
+			.form-input:focus {
+				outline: none;
+				border-color: #000000;
+				box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+			}
+
+			textarea.form-input {
+				min-height: 120px;
+				resize: vertical;
+			}
+
+			.button {
+				padding: 10px 16px;
+				font-size: 14px;
+				font-weight: 500;
+				color: #ffffff;
+				background-color: #000000;
+				border: none;
+				border-radius: 6px;
+				cursor: pointer;
+				transition: background-color 0.2s, opacity 0.2s;
+				font-family: inherit;
+			}
+
+			.button:hover:not(:disabled) {
+				background-color: #333333;
+			}
+
+			.button:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+
+			.button-secondary {
+				background-color: #f5f5f5;
+				color: #000000;
+			}
+
+			.button-secondary:hover:not(:disabled) {
+				background-color: #e5e5e5;
+			}
+
+			.message {
+				padding: 12px;
+				border-radius: 6px;
+				font-size: 14px;
+				margin-bottom: 20px;
+				display: none;
+			}
+
+			.message.show {
+				display: block;
+			}
+
+			.message-error {
+				background-color: #fef2f2;
+				border: 1px solid #fecaca;
+				color: #991b1b;
+			}
+
+			.message-success {
+				background-color: #f0fdf4;
+				border: 1px solid #bbf7d0;
+				color: #166534;
+			}
+
+			.message-info {
+				background-color: #eff6ff;
+				border: 1px solid #bfdbfe;
+				color: #1e40af;
+			}
+
+			.status {
+				display: inline-block;
+				padding: 4px 12px;
+				border-radius: 12px;
+				font-size: 12px;
+				font-weight: 500;
+				margin-bottom: 20px;
+			}
+
+			.status-logged-out {
+				background-color: #fef2f2;
+				color: #991b1b;
+			}
+
+			.status-logged-in {
+				background-color: #f0fdf4;
+				color: #166534;
+			}
+
+			.code-block {
+				background-color: #f5f5f5;
+				border: 1px solid #e5e5e5;
+				border-radius: 6px;
+				padding: 16px;
+				font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+				font-size: 13px;
+				overflow-x: auto;
+				margin-top: 12px;
+			}
+
+			.code-block pre {
+				margin: 0;
+				white-space: pre-wrap;
+				word-wrap: break-word;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>Save Data Example</h1>
+			<p class="subtitle">Complete example: Login and save JSON data to S3</p>
+
+			<!-- Login Section -->
+			<div class="section" id="loginSection">
+				<h2 style="font-size: 18px; margin-bottom: 16px">1. Login</h2>
+				<div class="status status-logged-out" id="loginStatus">Not logged in</div>
+
+				<div class="message message-error" id="loginError"></div>
+
+				<div class="form-group">
+					<label for="username" class="form-label">Username</label>
+					<input
+						type="text"
+						id="username"
+						name="username"
+						class="form-input"
+						placeholder="Enter username"
+						required
+					/>
+				</div>
+
+				<div class="form-group">
+					<label for="password" class="form-label">Password</label>
+					<input
+						type="password"
+						id="password"
+						name="password"
+						class="form-input"
+						placeholder="Enter password"
+						required
+					/>
+				</div>
+
+				<button type="button" class="button" id="loginButton">Log in</button>
+			</div>
+
+			<!-- Save Data Section -->
+			<div class="section" id="saveSection" style="display: none">
+				<h2 style="font-size: 18px; margin-bottom: 16px">2. Save JSON Data</h2>
+
+				<div class="message message-info" id="saveInfo">
+					You are logged in. Enter JSON data below and click "Save to S3".
+				</div>
+				<div class="message message-error" id="saveError"></div>
+				<div class="message message-success" id="saveSuccess"></div>
+
+				<div class="form-group">
+					<label for="jsonData" class="form-label">JSON Data</label>
+					<textarea
+						id="jsonData"
+						class="form-input"
+						placeholder='{"key": "value", "nested": {"data": 123}}'
+					></textarea>
+					<p style="font-size: 12px; color: #666; margin-top: 8px">
+						Enter valid JSON data. You can also paste JavaScript objects - they will be converted to JSON.
+					</p>
+				</div>
+
+				<button type="button" class="button" id="saveButton">Save to S3</button>
+				<button type="button" class="button button-secondary" id="loadExampleButton" style="margin-left: 8px">
+					Load Example
+				</button>
+				<button type="button" class="button button-secondary" id="logoutButton" style="margin-left: 8px">
+					Logout
+				</button>
+
+				<div id="saveResponse" style="display: none; margin-top: 20px">
+					<h3 style="font-size: 14px; font-weight: 500; margin-bottom: 8px">API Response:</h3>
+					<div class="code-block">
+						<pre id="saveResponseContent"></pre>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			// DOM elements
+			const loginSection = document.getElementById('loginSection');
+			const saveSection = document.getElementById('saveSection');
+			const loginStatus = document.getElementById('loginStatus');
+			const loginError = document.getElementById('loginError');
+			const saveError = document.getElementById('saveError');
+			const saveSuccess = document.getElementById('saveSuccess');
+			const saveInfo = document.getElementById('saveInfo');
+			const saveResponse = document.getElementById('saveResponse');
+			const saveResponseContent = document.getElementById('saveResponseContent');
+
+			const usernameInput = document.getElementById('username');
+			const passwordInput = document.getElementById('password');
+			const jsonDataInput = document.getElementById('jsonData');
+
+			const loginButton = document.getElementById('loginButton');
+			const saveButton = document.getElementById('saveButton');
+			const loadExampleButton = document.getElementById('loadExampleButton');
+			const logoutButton = document.getElementById('logoutButton');
+
+			// Check if user is already logged in
+			function checkLoginStatus() {
+				// Check if auth cookie exists (simplified check)
+				const cookies = document.cookie.split(';');
+				const hasAuth = cookies.some((cookie) => cookie.trim().startsWith('auth_token='));
+				if (hasAuth) {
+					showSaveSection();
+				}
+			}
+
+			// Show/hide sections
+			function showSaveSection() {
+				loginSection.style.display = 'none';
+				saveSection.style.display = 'block';
+				loginStatus.className = 'status status-logged-in';
+				loginStatus.textContent = 'Logged in';
+			}
+
+			function showLoginSection() {
+				loginSection.style.display = 'block';
+				saveSection.style.display = 'none';
+				loginStatus.className = 'status status-logged-out';
+				loginStatus.textContent = 'Not logged in';
+			}
+
+			// Message helpers
+			function showMessage(element, message) {
+				element.textContent = message;
+				element.classList.add('show');
+			}
+
+			function hideMessages() {
+				loginError.classList.remove('show');
+				saveError.classList.remove('show');
+				saveSuccess.classList.remove('show');
+			}
+
+			// Login function
+			async function handleLogin() {
+				hideMessages();
+				loginButton.disabled = true;
+				loginButton.textContent = 'Logging in...';
+
+				const username = usernameInput.value;
+				const password = passwordInput.value;
+
+				if (!username || !password) {
+					showMessage(loginError, 'Please enter username and password');
+					loginButton.disabled = false;
+					loginButton.textContent = 'Log in';
+					return;
+				}
+
+				try {
+					const response = await fetch('/api/login', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({ username, password }),
+						credentials: 'include' // Include cookies
+					});
+
+					const data = await response.json();
+
+					if (response.ok) {
+						showSaveSection();
+						showMessage(saveInfo, `Successfully logged in as ${username}. You can now save data.`);
+					} else {
+						showMessage(loginError, data.error || 'Invalid username or password');
+						loginButton.disabled = false;
+						loginButton.textContent = 'Log in';
+					}
+				} catch (error) {
+					console.error('Login error:', error);
+					showMessage(loginError, 'An error occurred. Please try again.');
+					loginButton.disabled = false;
+					loginButton.textContent = 'Log in';
+				}
+			}
+
+			// Save data function
+			async function handleSave() {
+				hideMessages();
+				saveButton.disabled = true;
+				saveButton.textContent = 'Saving...';
+				saveResponse.style.display = 'none';
+
+				let jsonData;
+				const inputValue = jsonDataInput.value.trim();
+
+				if (!inputValue) {
+					showMessage(saveError, 'Please enter JSON data');
+					saveButton.disabled = false;
+					saveButton.textContent = 'Save to S3';
+					return;
+				}
+
+				// Try to parse JSON
+				try {
+					// First try to parse as JSON string
+					jsonData = JSON.parse(inputValue);
+				} catch (e1) {
+					try {
+						// If that fails, try to evaluate as JavaScript (for convenience)
+						// This allows pasting JS objects like {key: "value"}
+						jsonData = eval('(' + inputValue + ')');
+					} catch (e2) {
+						showMessage(saveError, 'Invalid JSON format. Please check your syntax.');
+						saveButton.disabled = false;
+						saveButton.textContent = 'Save to S3';
+						return;
+					}
+				}
+
+				try {
+					const response = await fetch('/api/save', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						credentials: 'include', // Include auth cookie
+						body: JSON.stringify({
+							data: jsonData
+						})
+					});
+
+					const responseData = await response.json();
+
+					if (response.ok) {
+						showMessage(saveSuccess, `Data saved successfully! Location: ${responseData.results.json.key}`);
+						saveResponse.style.display = 'block';
+						saveResponseContent.textContent = JSON.stringify(responseData, null, 2);
+					} else {
+						showMessage(saveError, responseData.error || 'Failed to save data');
+						saveResponse.style.display = 'block';
+						saveResponseContent.textContent = JSON.stringify(responseData, null, 2);
+					}
+				} catch (error) {
+					console.error('Save error:', error);
+					showMessage(saveError, 'An error occurred. Please try again.');
+				} finally {
+					saveButton.disabled = false;
+					saveButton.textContent = 'Save to S3';
+				}
+			}
+
+			// Logout function
+			function handleLogout() {
+				// Delete the auth cookie
+				document.cookie = 'auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+				showLoginSection();
+				hideMessages();
+				usernameInput.value = '';
+				passwordInput.value = '';
+				jsonDataInput.value = '';
+				saveResponse.style.display = 'none';
+			}
+
+			// Load example data
+			function loadExample() {
+				const exampleData = {
+					message: 'Hello from the save example!',
+					timestamp: new Date().toISOString(),
+					data: {
+						user: 'example-user',
+						values: [1, 2, 3, 4, 5],
+						metadata: {
+							version: '1.0',
+							source: 'example-save.html'
+						}
+					}
+				};
+				jsonDataInput.value = JSON.stringify(exampleData, null, 2);
+			}
+
+			// Event listeners
+			loginButton.addEventListener('click', handleLogin);
+			saveButton.addEventListener('click', handleSave);
+			logoutButton.addEventListener('click', handleLogout);
+			loadExampleButton.addEventListener('click', loadExample);
+
+			// Allow Enter key to submit
+			usernameInput.addEventListener('keypress', (e) => {
+				if (e.key === 'Enter') handleLogin();
+			});
+			passwordInput.addEventListener('keypress', (e) => {
+				if (e.key === 'Enter') handleLogin();
+			});
+
+			// Check login status on page load
+			checkLoginStatus();
+		</script>
+	</body>
+</html>
+

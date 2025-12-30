@@ -1,0 +1,26 @@
+{
+  "name": "vercel-s3-api",
+  "version": "1.0.0",
+  "description": "Vercel API routes for login and S3 file saving",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step required'"
+  },
+  "keywords": [
+    "vercel",
+    "api",
+    "s3",
+    "authentication"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.490.0",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  }
+}
+
