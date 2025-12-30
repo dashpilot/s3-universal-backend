@@ -151,7 +151,11 @@ Both `data` and `image` are optional, but at least one must be provided. The bac
 	"success": true,
 	"message": "Data saved successfully",
 	"results": {
-		"json": { "key": "username/data.json", "saved": true },
+		"json": {
+			"key": "username/data.json",
+			"backup": "username/data.json.backup.2025-01-15_10-30-45",
+			"saved": true
+		},
 		"image": {
 			"key": "username/img/abc123xyz456.png",
 			"filename": "abc123xyz456.png",
@@ -162,7 +166,11 @@ Both `data` and `image` are optional, but at least one must be provided. The bac
 }
 ```
 
-The `url` field in the image result is only included if `LIVE_URL` is configured in your environment variables.
+**Notes:**
+
+- The `url` field in the image result is only included if `LIVE_URL` is configured in your environment variables.
+- JSON data is automatically backed up on every save with a timestamp (e.g., `data.json.backup.2025-01-15_10-30-45`).
+- Backups older than 30 days are automatically cleaned up to prevent excessive storage usage.
 
 ## File Structure
 
@@ -171,9 +179,11 @@ Files are saved to S3 in the following structure:
 ```
 bucket/
   ├── {username}/
-  │   ├── data.json          # JSON data
+  │   ├── data.json                    # Current JSON data
+  │   ├── data.json.backup.2025-01-15_10-30-45  # Timestamped backups
+  │   ├── data.json.backup.2025-01-14_15-20-10  # (auto-cleaned after 30 days)
   │   └── img/
-  │       └── {filename}     # Images
+  │       └── {filename}               # Images
 ```
 
 ## Usage Examples

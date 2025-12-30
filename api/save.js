@@ -2,7 +2,12 @@
 // Saves JSON data and base-64 images to S3-compatible storage
 // Requires authentication via JWT token
 
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const {
+	S3Client,
+	PutObjectCommand,
+	ListObjectsV2Command,
+	DeleteObjectCommand
+} = require('@aws-sdk/client-s3');
 const jwt = require('jsonwebtoken');
 
 // Initialize S3 client
@@ -88,6 +93,7 @@ module.exports = async (req, res) => {
 			const jsonKey = `${username}/data.json`;
 			const jsonBody = typeof data === 'string' ? data : JSON.stringify(data);
 
+			// Save the main data.json file
 			await s3Client.send(
 				new PutObjectCommand({
 					Bucket: bucket,
@@ -97,7 +103,52 @@ module.exports = async (req, res) => {
 				})
 			);
 
-			results.json = { key: jsonKey, saved: true };
+			// Create a timestamped backup
+			const timestamp = new Date()
+				.toISOString()
+				.replace(/[:.]/g, '-')
+				.replace('T', '_')
+				.split('.')[0];
+			const backupKey = `${username}/data.json.backup.${timestamp}`;
+
+			await s3Client.send(
+				new PutObjectCommand({
+					Bucket: bucket,
+					Key: backupKey,
+					Body: jsonBody,
+					ContentType: 'application/json'
+				})
+			);
+
+			// Clean up old backups (older than 30 days)
+			try {
+				const listResponse = await s3Client.send(
+					new ListObjectsV2Command({
+						Bucket: bucket,
+						Prefix: `${username}/data.json.backup.`
+					})
+				);
+
+				if (listResponse.Contents && listResponse.Contents.length > 0) {
+					const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+
+					for (const object of listResponse.Contents) {
+						if (object.LastModified && object.LastModified.getTime() < thirtyDaysAgo) {
+							await s3Client.send(
+								new DeleteObjectCommand({
+									Bucket: bucket,
+									Key: object.Key
+								})
+							);
+						}
+					}
+				}
+			} catch (cleanupError) {
+				// Log but don't fail the request if cleanup fails
+				console.error('Error cleaning up old backups:', cleanupError);
+			}
+
+			results.json = { key: jsonKey, backup: backupKey, saved: true };
 		}
 
 		// Save base-64 image
