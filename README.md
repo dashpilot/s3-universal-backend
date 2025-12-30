@@ -73,6 +73,46 @@ Authenticates a user and returns a JWT token.
 
 The token is also set as an HTTP-only cookie named `auth_token`.
 
+### GET `/api/verify`
+
+Checks if the user is currently authenticated. Useful for checking login status on page load.
+
+**Headers:**
+
+- `Cookie: auth_token=<token>` (automatically sent by browser)
+- OR `Authorization: Bearer <token>`
+
+**Response (authenticated):**
+
+```json
+{
+	"authenticated": true,
+	"username": "admin"
+}
+```
+
+**Response (not authenticated):**
+
+```json
+{
+	"authenticated": false,
+	"error": "Not authenticated"
+}
+```
+
+### POST `/api/logout`
+
+Logs out the current user by clearing the authentication cookie.
+
+**Response:**
+
+```json
+{
+	"success": true,
+	"message": "Logged out successfully"
+}
+```
+
 ### POST `/api/save`
 
 Saves JSON data and/or base-64 encoded images to S3 storage. Requires authentication.

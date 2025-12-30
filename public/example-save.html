@@ -292,12 +292,24 @@
 			const logoutButton = document.getElementById('logoutButton');
 
 			// Check if user is already logged in
-			function checkLoginStatus() {
-				// Check if auth cookie exists (simplified check)
-				const cookies = document.cookie.split(';');
-				const hasAuth = cookies.some((cookie) => cookie.trim().startsWith('auth_token='));
-				if (hasAuth) {
-					showSaveSection();
+			async function checkLoginStatus() {
+				try {
+					const response = await fetch('/api/verify', {
+						method: 'GET',
+						credentials: 'include' // Include cookies
+					});
+
+					const data = await response.json();
+
+					if (response.ok && data.authenticated) {
+						showSaveSection();
+						if (data.username) {
+							showMessage(saveInfo, `Logged in as ${data.username}. You can now save data.`);
+						}
+					}
+				} catch (error) {
+					console.error('Auth check error:', error);
+					// Silently fail - user is not logged in
 				}
 			}
 
@@ -439,9 +451,18 @@
 			}
 
 			// Logout function
-			function handleLogout() {
-				// Delete the auth cookie
-				document.cookie = 'auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+			async function handleLogout() {
+				try {
+					// Call logout endpoint to clear HTTP-only cookie
+					await fetch('/api/logout', {
+						method: 'POST',
+						credentials: 'include' // Include cookies
+					});
+				} catch (error) {
+					console.error('Logout error:', error);
+					// Continue with logout even if API call fails
+				}
+
 				showLoginSection();
 				hideMessages();
 				usernameInput.value = '';
